@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Mail Dispatcher</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4">
+
+  <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+    <h1 class="text-xl font-semibold mb-2">Send Predefined Mail</h1>
+    <p class="text-sm text-slate-400 mb-6">
+      Enter the recipient address below to immediately dispatch the prepared message.
+    </p>
+
+    <form id="mailForm" class="space-y-4">
+      <div>
+        <label for="recipient" class="block text-xs uppercase tracking-wider text-slate-400 font-medium mb-1.5">
+          Recipient Email
+        </label>
+        <input
+          type="email"
+          id="recipient"
+          required
+          placeholder="name@example.com"
+          class="w-full px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+        />
+      </div>
+
+      <button
+        type="submit"
+        id="submitBtn"
+        class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] transition font-medium text-sm rounded-lg flex items-center justify-center gap-2"
+      >
+        <span>Send Email</span>
+      </button>
+    </form>
+
+    <div id="statusMsg" class="mt-4 text-sm text-center hidden"></div>
+  </div>
+
+  <script>
+    // Replace with your actual AWS Lambda Function URL
+    const LAMBDA_URL = "https://your-unique-id.lambda-url.region.on.aws/";
+
+    const form = document.getElementById("mailForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const statusMsg = document.getElementById("statusMsg");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const recipient = document.getElementById("recipient").value.trim();
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = "Sending...";
+      statusMsg.className = "mt-4 text-sm text-center hidden";
+
+      try {
+        const response = await fetch(LAMBDA_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recipient }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          statusMsg.textContent = "Email successfully dispatched!";
+          statusMsg.className = "mt-4 text-sm text-center text-emerald-400";
+          form.reset();
+        } else {
+          throw new Error(data.error || "Failed to send");
+        }
+      } catch (err) {
+        statusMsg.textContent = err.message || "An error occurred.";
+        statusMsg.className = "mt-4 text-sm text-center text-rose-400";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "Send Email";
+      }
+    });
+  </script>
+</body>
+</html>
